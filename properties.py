@@ -1,0 +1,76 @@
+import os
+
+import bpy
+
+
+class DepthToMeshProperties(bpy.types.PropertyGroup):
+    input_path: bpy.props.StringProperty(
+        name="Input File",
+        description="Path to an image (PNG, JPG, EXR, TIFF)",
+        subtype="FILE_PATH",
+    )
+
+    use_delight: bpy.props.BoolProperty(
+        name="Delight Image",
+        description=(
+            "Apply Multi-Scale Retinex to remove lighting from the texture. "
+            "Disable to use the original image as-is"
+        ),
+        default=True,
+    )
+
+    delight_strength: bpy.props.FloatProperty(
+        name="Delight Strength",
+        description=(
+            "Blend between the original image (0.0) and the fully delighted "
+            "result (1.0)"
+        ),
+        default=0.5,
+        min=0.0,
+        max=1.0,
+        step=5,
+        precision=2,
+    )
+
+    displacement_strength: bpy.props.FloatProperty(
+        name="Displacement Strength",
+        description="Scale factor applied to the estimated depth when displacing the mesh",
+        default=1.0,
+        min=0.0,
+        max=5.0,
+        step=10,
+        precision=2,
+    )
+
+    mesh_subdivisions: bpy.props.IntProperty(
+        name="Mesh Subdivisions",
+        description=(
+            "Grid resolution as a power of two (e.g. 7 = 128×128 segments, "
+            "8 = 256×256 segments). Higher values capture more detail but use more memory"
+        ),
+        default=7,
+        min=2,
+        max=10,
+    )
+
+    output_mesh_name: bpy.props.StringProperty(
+        name="Output Name",
+        description="Name for the generated mesh object in the scene",
+        default="DepthMesh",
+    )
+
+    cache_dir: bpy.props.StringProperty(
+        name="Model Cache",
+        description=(
+            "Directory where Depth Anything V2 weights are downloaded and cached. "
+            "Requires ~100 MB on first use"
+        ),
+        subtype="DIR_PATH",
+        default=os.path.join(os.path.expanduser("~"), ".cache", "depth_to_mesh"),
+    )
+
+    status_text: bpy.props.StringProperty(
+        name="Status",
+        description="Current pipeline status message",
+        default="",
+    )
