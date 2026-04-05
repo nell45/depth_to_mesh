@@ -47,6 +47,7 @@ class DEPTHMESH_PT_input(bpy.types.Panel):
         props = context.scene.depth_to_mesh
 
         layout.prop(props, "input_path", text="")
+        layout.prop(props, "use_alpha")
         layout.prop(props, "output_mesh_name")
 
 
@@ -67,6 +68,11 @@ class DEPTHMESH_PT_depth_settings(bpy.types.Panel):
         col.prop(props, "use_delight")
         if props.use_delight:
             col.prop(props, "delight_strength", slider=True)
+
+        col.separator(factor=0.5)
+        col.prop(props, "clean_edges")
+        if props.clean_edges:
+            col.prop(props, "edge_falloff", slider=True)
 
         col.separator(factor=0.5)
         col.prop(props, "mesh_subdivisions")

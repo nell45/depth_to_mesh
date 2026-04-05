@@ -61,14 +61,25 @@ def run(
             f"Supported: {', '.join(sorted(ALL_SUPPORTED_EXTS))}"
         )
 
+    alpha = None
+
     if preloaded_image is not None:
         progress("Using pre-loaded image...")
-        albedo = preloaded_image
+        if preloaded_image.shape[2] == 4:
+            albedo = preloaded_image[:, :, :3]
+            alpha = preloaded_image[:, :, 3]
+        else:
+            albedo = preloaded_image
     else:
         progress("Loading image...")
         from PIL import Image
-        pil_img = Image.open(input_path).convert("RGB")
-        albedo = np.array(pil_img, dtype=np.float32) / 255.0
+        pil_img = Image.open(input_path).convert("RGBA")
+        rgba = np.array(pil_img, dtype=np.float32) / 255.0
+        albedo = rgba[:, :, :3]
+        alpha = rgba[:, :, 3]
+        # Discard alpha for fully-opaque images (e.g. JPEG loaded as RGBA)
+        if alpha.min() >= 1.0:
+            alpha = None
 
     if use_ml_depth:
         estimator = DepthAnythingV2Estimator(
@@ -90,4 +101,4 @@ def run(
         albedo = original * (1.0 - delight_strength) + delighted * delight_strength
         progress("Delighting complete.")
 
-    return albedo, depth
+    return albedo, depth, alpha

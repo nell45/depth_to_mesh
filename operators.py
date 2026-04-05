@@ -57,7 +57,7 @@ class DEPTHMESH_OT_run_pipeline(bpy.types.Operator):
 
         def thread_fn():
             try:
-                albedo, depth = pipeline_runner.run(
+                albedo, depth, alpha = pipeline_runner.run(
                     input_path=input_path,
                     cache_dir=cache_dir,
                     use_ml_depth=True,
@@ -66,7 +66,7 @@ class DEPTHMESH_OT_run_pipeline(bpy.types.Operator):
                     progress_callback=progress,
                     preloaded_image=preloaded_image,
                 )
-                self._result = (albedo, depth)
+                self._result = (albedo, depth, alpha)
             except Exception as e:
                 self._error = e
             finally:
@@ -111,13 +111,18 @@ class DEPTHMESH_OT_run_pipeline(bpy.types.Operator):
             self.report({"ERROR"}, str(self._error))
             return {"CANCELLED"}
 
-        albedo, depth = self._result
+        albedo, depth, alpha = self._result
+        if not props.use_alpha:
+            alpha = None
         mesh_builder.build(
             albedo=albedo,
             depth=depth,
             mesh_name=props.output_mesh_name,
             subdivisions=props.mesh_subdivisions,
             displacement_strength=props.displacement_strength,
+            clean_edges=props.clean_edges,
+            edge_falloff=props.edge_falloff,
+            alpha=alpha,
         )
 
         props.status_text = "Done"

@@ -69,6 +69,37 @@ class DepthToMeshProperties(bpy.types.PropertyGroup):
         default=os.path.join(os.path.expanduser("~"), ".cache", "depth_to_mesh"),
     )
 
+    use_alpha: bpy.props.BoolProperty(
+        name="Transparent Background",
+        description=(
+            "Use the image's alpha channel as a cutout mask. "
+            "Enable for PNG/EXR images with a transparent background"
+        ),
+        default=False,
+    )
+
+    clean_edges: bpy.props.BoolProperty(
+        name="Clean Edges",
+        description=(
+            "Taper the depth map to zero at the mesh border so the sides "
+            "of the displaced mesh are level rather than steep and uneven"
+        ),
+        default=False,
+    )
+
+    edge_falloff: bpy.props.FloatProperty(
+        name="Falloff Width",
+        description=(
+            "Width of the taper zone as a fraction of the image size. "
+            "0.1 = only the outermost 10% fades; 0.5 = outer half fades"
+        ),
+        default=0.1,
+        min=0.01,
+        max=0.5,
+        step=1,
+        precision=2,
+    )
+
     status_text: bpy.props.StringProperty(
         name="Status",
         description="Current pipeline status message",
