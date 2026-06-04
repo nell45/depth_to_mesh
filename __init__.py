@@ -10,8 +10,8 @@ bl_info = {
         "and transparent background support."
     ),
     "warning": "Requires Python dependencies — see Add-on Preferences to install",
-    "doc_url": "",
-    "tracker_url": "",
+    "doc_url": "https://github.com/nell45/depth_to_mesh.git",
+    "tracker_url": "https://github.com/nell45/depth_to_mesh.git",
     "category": "Object",
 }
 
