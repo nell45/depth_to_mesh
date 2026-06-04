@@ -135,6 +135,9 @@ def build(
     clean_edges: bool = False,
     edge_falloff: float = 0.1,
     alpha: np.ndarray = None,
+    use_bump: bool = False,
+    bump_strength: float = 0.5,
+    normal_smoothing: float = 5.0,
 ) -> bpy.types.Object:
     """
     Build a subdivided plane mesh displaced by the depth map and textured
@@ -240,6 +243,61 @@ def build(
 
     links.new(uv_node.outputs["Generated"], tex_node.inputs["Vector"])
     links.new(tex_node.outputs["Color"], bsdf_node.inputs["Base Color"])
+
+    if use_bump:
+        # Tangent-space normal map derived from depth gradients.
+        # Flat regions produce a neutral normal (0.5, 0.5, 1.0); only edges
+        # and curves produce coloured normals, so bumps only appear where needed.
+        # Blur depth first to suppress high-frequency estimation noise on smooth
+        # surfaces; only large-scale features survive to become normals.
+        depth_for_normals = depth
+        if normal_smoothing > 0.0:
+            from PIL import Image, ImageFilter
+            depth_u8 = (depth_for_normals * 255.0).clip(0, 255).astype(np.uint8)
+            depth_pil = Image.fromarray(depth_u8, mode="L")
+            depth_pil = depth_pil.filter(ImageFilter.GaussianBlur(radius=normal_smoothing))
+            depth_for_normals = np.array(depth_pil, dtype=np.float32) / 255.0
+
+        dz_dx = np.gradient(depth_for_normals, axis=1)
+        dz_dy = np.gradient(depth_for_normals, axis=0)
+
+        # Raw gradients are tiny (depth is in [0,1] over many pixels).
+        # Scale so that the typical gradient produces a visible tilt.
+        # Divide by the 95th-percentile gradient magnitude so the scale
+        # adapts to the actual depth variation in this image.
+        grad_mag = np.sqrt(dz_dx ** 2 + dz_dy ** 2)
+        p95 = float(np.percentile(grad_mag, 95)) + 1e-6
+        amp = 0.5 / p95  # typical strong edge → ~30° tilt
+
+        nx = -dz_dx * amp
+        ny =  dz_dy * amp
+        nz =  np.ones_like(depth)
+        length = np.sqrt(nx ** 2 + ny ** 2 + nz ** 2)
+        nx /= length
+        ny /= length
+        nz /= length
+
+        normal_rgb = np.stack([
+            nx * 0.5 + 0.5,
+            ny * 0.5 + 0.5,
+            nz * 0.5 + 0.5,
+        ], axis=2).astype(np.float32)
+
+        normal_img = _array_to_image(mesh_name + "_normal", normal_rgb, is_data=True)
+
+        bump_tex      = nodes.new("ShaderNodeTexImage")
+        normalmap_node = nodes.new("ShaderNodeNormalMap")
+
+        bump_tex.image = normal_img
+        bump_tex.extension = "EXTEND"
+        normalmap_node.inputs["Strength"].default_value = bump_strength
+
+        links.new(uv_node.outputs["Generated"],  bump_tex.inputs["Vector"])
+        links.new(bump_tex.outputs["Color"],     normalmap_node.inputs["Color"])
+        links.new(normalmap_node.outputs["Normal"], bsdf_node.inputs["Normal"])
+
+        bump_tex.location      = (-350, -300)
+        normalmap_node.location = (0,    -300)
 
     if alpha is not None:
         links.new(tex_node.outputs["Alpha"], bsdf_node.inputs["Alpha"])

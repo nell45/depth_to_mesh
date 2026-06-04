@@ -1,8 +1,10 @@
 import bpy
 
-from . import operators, panels, properties
+from . import operators, panels, preferences, properties
 
 _classes = [
+    preferences.DEPTHMESH_Preferences,
+    preferences.DEPTHMESH_OT_install_dependencies,
     properties.DepthToMeshProperties,
     operators.DEPTHMESH_OT_run_pipeline,
     operators.DEPTHMESH_OT_open_cache_dir,

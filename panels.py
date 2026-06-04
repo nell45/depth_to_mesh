@@ -1,5 +1,7 @@
 import bpy
 
+from . import deps_manager
+
 _CATEGORY = "Depth to Mesh"
 
 
@@ -13,6 +15,17 @@ class DEPTHMESH_PT_main(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         props = context.scene.depth_to_mesh
+
+        if not deps_manager.all_installed():
+            box = layout.box()
+            box.label(text="Missing dependencies!", icon="ERROR")
+            box.label(text="Open Preferences → Add-ons → Depth to Mesh")
+            box.operator(
+                "depthmesh.install_dependencies",
+                text="Install Dependencies",
+                icon="IMPORT",
+            )
+            layout.separator(factor=0.5)
 
         col = layout.column(align=True)
         col.scale_y = 1.6
@@ -68,6 +81,12 @@ class DEPTHMESH_PT_depth_settings(bpy.types.Panel):
         col.prop(props, "use_delight")
         if props.use_delight:
             col.prop(props, "delight_strength", slider=True)
+
+        col.separator(factor=0.5)
+        col.prop(props, "use_bump")
+        if props.use_bump:
+            col.prop(props, "bump_strength", slider=True)
+            col.prop(props, "normal_smoothing", slider=True)
 
         col.separator(factor=0.5)
         col.prop(props, "clean_edges")

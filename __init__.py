@@ -1,11 +1,17 @@
 bl_info = {
     "name": "Depth to Mesh",
-    "author": "",
-    "version": (0, 1, 0),
+    "author": "Neel Pal",
+    "version": (1, 0, 0),
     "blender": (4, 0, 0),
     "location": "View3D > N-panel > Depth to Mesh",
-    "description": "Generate a displaced, delighted mesh from an image or video",
-    "warning": "Requires a one-time ~100 MB model download on first use",
+    "description": (
+        "Convert any image into a displaced 3D mesh using AI depth estimation "
+        "(Depth Anything V2). Includes delighting, normal maps, clean edges, "
+        "and transparent background support."
+    ),
+    "warning": "Requires Python dependencies — see Add-on Preferences to install",
+    "doc_url": "",
+    "tracker_url": "",
     "category": "Object",
 }
 

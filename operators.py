@@ -123,6 +123,9 @@ class DEPTHMESH_OT_run_pipeline(bpy.types.Operator):
             clean_edges=props.clean_edges,
             edge_falloff=props.edge_falloff,
             alpha=alpha,
+            use_bump=props.use_bump,
+            bump_strength=props.bump_strength,
+            normal_smoothing=props.normal_smoothing,
         )
 
         props.status_text = "Done"
@@ -163,6 +166,39 @@ class DEPTHMESH_OT_clear_output(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        # Stub — implementation added in Phase 6
-        self.report({"INFO"}, "Depth to Mesh: clear output stub")
+        col = bpy.data.collections.get(mesh_builder._COLLECTION_NAME)
+        if col is None or not col.objects:
+            self.report({"INFO"}, "Depth to Mesh: nothing to clear")
+            return {"FINISHED"}
+
+        # Gather materials and images before unlinking objects
+        materials = set()
+        images = set()
+        for obj in list(col.objects):
+            for slot in obj.material_slots:
+                mat = slot.material
+                if mat is None:
+                    continue
+                materials.add(mat)
+                if mat.use_nodes:
+                    for node in mat.node_tree.nodes:
+                        if node.type == "TEX_IMAGE" and node.image:
+                            images.add(node.image)
+            mesh = obj.data
+            bpy.data.objects.remove(obj, do_unlink=True)
+            if mesh and mesh.users == 0:
+                bpy.data.meshes.remove(mesh)
+
+        for mat in materials:
+            if mat.users == 0:
+                bpy.data.materials.remove(mat)
+        for img in images:
+            if img.users == 0:
+                bpy.data.images.remove(img)
+
+        if not col.objects:
+            bpy.data.collections.remove(col)
+
+        context.scene.depth_to_mesh.status_text = ""
+        self.report({"INFO"}, "Depth to Mesh: output cleared")
         return {"FINISHED"}

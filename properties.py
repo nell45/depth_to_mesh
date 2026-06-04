@@ -69,6 +69,40 @@ class DepthToMeshProperties(bpy.types.PropertyGroup):
         default=os.path.join(os.path.expanduser("~"), ".cache", "depth_to_mesh"),
     )
 
+    use_bump: bpy.props.BoolProperty(
+        name="Normal Map (Bump)",
+        description=(
+            "Derive a bump map from the image luminance and apply it to the "
+            "material's Normal input. Fakes fine surface detail that the depth "
+            "map cannot capture"
+        ),
+        default=False,
+    )
+
+    bump_strength: bpy.props.FloatProperty(
+        name="Bump Strength",
+        description="Strength of the normal map effect (0 = off, 1 = full)",
+        default=0.5,
+        min=0.0,
+        max=2.0,
+        step=5,
+        precision=2,
+    )
+
+    normal_smoothing: bpy.props.FloatProperty(
+        name="Normal Smoothing",
+        description=(
+            "Gaussian blur radius applied to the depth map before computing "
+            "normals. Higher values keep only large-scale features and suppress "
+            "fine noise on smooth surfaces"
+        ),
+        default=5.0,
+        min=0.0,
+        max=30.0,
+        step=10,
+        precision=1,
+    )
+
     use_alpha: bpy.props.BoolProperty(
         name="Transparent Background",
         description=(
