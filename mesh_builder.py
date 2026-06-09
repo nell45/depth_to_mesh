@@ -87,6 +87,12 @@ def _array_to_image(
         rgba[:, :, :3] = array
     img.pixels[:] = rgba[::-1].reshape(-1)
     img.update()
+    # Pack pixel data into the .blend file so Blender can always find it.
+    # Without this, images created in memory have no file source — if Blender
+    # flushes its image cache (undo, mode switch, memory pressure) it tries to
+    # reload from disk, finds nothing, and the texture goes blank, killing the
+    # Displace modifier's effect.
+    img.pack()
 
     return img
 
